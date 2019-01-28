@@ -4,30 +4,9 @@ metadata:
   name: csr-approver
 rules:
 - apiGroups:
-  - ""
+  - "certificates.k8s.io"
   resources:
-  - pods
-  - services
-  - endpoints
-  - persistentvolumeclaims
-  - events
-  - configmaps
-  - secrets
+  - certificatesigningrequests
+  - certificatesigningrequests/approve
   verbs:
   - "*"
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  - daemonsets
-  - replicasets
-  - statefulsets
-  verbs:
-  - "*"
-- apiGroups:
-  - monitoring.coreos.com
-  resources:
-  - servicemonitors
-  verbs:
-  - "get"
-  - "create"

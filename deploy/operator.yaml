@@ -13,21 +13,21 @@ spec:
         name: csr-approver
     spec:
       serviceAccountName: csr-approver
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
       containers:
         - name: csr-approver
-          # Replace this with the built image name
-          image: REPLACE_IMAGE
-          ports:
-          - containerPort: 60000
-            name: metrics
-          command:
-          - csr-approver
+          image: docker.io/jnummelin/csr-approver:latest
+          # ports:
+          # - containerPort: 60000
+          #   name: metrics
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
+              value: ""
             - name: POD_NAME
               valueFrom:
                 fieldRef:
