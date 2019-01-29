@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: csr-approver
+  name: kubelet-rubber-stamp
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: csr-approver
+      name: kubelet-rubber-stamp
   template:
     metadata:
       labels:
-        name: csr-approver
+        name: kubelet-rubber-stamp
     spec:
-      serviceAccountName: csr-approver
+      serviceAccountName: kubelet-rubber-stamp
       tolerations:
         - effect: NoSchedule
           operator: Exists
@@ -20,8 +20,8 @@ spec:
         node-role.kubernetes.io/master: ""
       priorityClassName: system-cluster-critical
       containers:
-        - name: csr-approver
-          image: docker.io/jnummelin/csr-approver:latest
+        - name: kubelet-rubber-stamp
+          image: quay.io/kontena/kubelet-rubber-stamp-amd64:latest
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
@@ -31,4 +31,4 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
-              value: "csr-approver"
+              value: "kubelet-rubber-stamp"

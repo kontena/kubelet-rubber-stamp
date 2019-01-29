@@ -2,19 +2,21 @@ FROM golang:1.11 as builder
 
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
-WORKDIR  /go/src/github.com/jnummelin/csr-approver
+WORKDIR  /go/src/github.com/kontena/kubelet-rubber-stamp
 
 # Add dependency graph and vendor it in
-ADD Gopkg.* /go/src/github.com/jnummelin/csr-approver/
+ADD Gopkg.* /go/src/github.com/kontena/kubelet-rubber-stamp/
 RUN dep ensure -v -vendor-only
 
 # Add source and compile
-ADD . /go/src/github.com/jnummelin/csr-approver/
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o csr-approver cmd/manager/main.go
+ADD . /go/src/github.com/kontena/kubelet-rubber-stamp/
+
+ARG ARCH=amd64
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} go build -a -installsuffix cgo -o kubelet-rubber-stamp cmd/manager/main.go
 
 
 FROM scratch
 
-COPY --from=builder /go/src/github.com/jnummelin/csr-approver/csr-approver /csr-approver
+COPY --from=builder /go/src/github.com/kontena/kubelet-rubber-stamp/kubelet-rubber-stamp /kubelet-rubber-stamp
 
-ENTRYPOINT ["/csr-approver", "-logtostderr"]
+ENTRYPOINT ["/kubelet-rubber-stamp", "-logtostderr"]

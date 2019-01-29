@@ -5,8 +5,8 @@ import (
 	"log"
 	"runtime"
 
-	"github.com/jnummelin/csr-approver/pkg/apis"
-	"github.com/jnummelin/csr-approver/pkg/controller"
+	"github.com/kontena/kubelet-rubber-stamp/pkg/apis"
+	"github.com/kontena/kubelet-rubber-stamp/pkg/controller"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"

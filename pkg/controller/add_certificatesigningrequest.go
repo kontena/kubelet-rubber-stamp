@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/jnummelin/csr-approver/pkg/controller/certificatesigningrequest"
+	"github.com/kontena/kubelet-rubber-stamp/pkg/controller/certificatesigningrequest"
 )
 
 func init() {
