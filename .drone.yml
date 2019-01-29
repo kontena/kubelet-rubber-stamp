@@ -3,10 +3,12 @@ workspace:
   path: src/github.com/kontena/kubelet-rubber-stamp
 
 pipeline:
-  deps:
+  test:
     image: golang:1.11
     commands:
+      - mkdir -p /go/bin
       - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+      - dep ensure -v -vendor-only
       - ./test.sh
 
   docker:
