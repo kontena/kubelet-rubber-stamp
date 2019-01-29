@@ -7,7 +7,7 @@ The logic used follows the same logic used when auto-approving kubelet client ce
 So basically the flow is:
 1. kubelet gets the client cert (see [TLS bootstrap](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/#approval))
 2. Kubelet creates a [CSR](https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/#create-a-certificate-signing-request-object-to-send-to-the-kubernetes-api)
-3. kubelet-rubber-stamp reacts to the creationg of a CSR
+3. kubelet-rubber-stamp reacts to the creation of a CSR
     - validates that it's a valid request for kubelet serving certificate
     - validates that the requestor (the kubelet/node) has sufficient authorization
     - approve the CSR
