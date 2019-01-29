@@ -18,12 +18,10 @@ spec:
           operator: Exists
       nodeSelector:
         node-role.kubernetes.io/master: ""
+      priorityClassName: system-cluster-critical
       containers:
         - name: csr-approver
           image: docker.io/jnummelin/csr-approver:latest
-          # ports:
-          # - containerPort: 60000
-          #   name: metrics
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE

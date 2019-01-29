@@ -4,6 +4,9 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
+	"log"
+	"reflect"
+	"strings"
 
 	capi "k8s.io/api/certificates/v1beta1"
 )
@@ -38,4 +41,48 @@ func parseCSR(obj *capi.CertificateSigningRequest) (*x509.CertificateRequest, er
 		return nil, err
 	}
 	return csr, nil
+}
+
+func hasExactUsages(csr *capi.CertificateSigningRequest, usages []capi.KeyUsage) bool {
+	if len(usages) != len(csr.Spec.Usages) {
+		return false
+	}
+
+	usageMap := map[capi.KeyUsage]struct{}{}
+	for _, u := range usages {
+		usageMap[u] = struct{}{}
+	}
+
+	for _, u := range csr.Spec.Usages {
+		if _, ok := usageMap[u]; !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
+var kubeletServerUsages = []capi.KeyUsage{
+	capi.UsageKeyEncipherment,
+	capi.UsageDigitalSignature,
+	capi.UsageServerAuth,
+}
+
+func isNodeServingCert(csr *capi.CertificateSigningRequest, x509cr *x509.CertificateRequest) bool {
+	if !reflect.DeepEqual([]string{"system:nodes"}, x509cr.Subject.Organization) {
+		log.Printf("Org does not match: %s\n", x509cr.Subject.Organization)
+		return false
+	}
+	if (len(x509cr.DNSNames) < 1) || (len(x509cr.IPAddresses) < 1) {
+		return false
+	}
+	if !hasExactUsages(csr, kubeletServerUsages) {
+		log.Println("Usage does not match")
+		return false
+	}
+	if !strings.HasPrefix(x509cr.Subject.CommonName, "system:node:") {
+		log.Printf("CN does not match: %s\n", x509cr.Subject.CommonName)
+		return false
+	}
+	return true
 }

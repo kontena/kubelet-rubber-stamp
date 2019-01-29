@@ -5,8 +5,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"log"
-	"reflect"
-	"strings"
 
 	authorization "k8s.io/api/authorization/v1beta1"
 	capi "k8s.io/api/certificates/v1beta1"
@@ -21,6 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+// Tries to recognize CSRs that are specific to this use case
 type csrRecognizer struct {
 	recognize      func(csr *capi.CertificateSigningRequest, x509cr *x509.CertificateRequest) bool
 	permission     authorization.ResourceAttributes
@@ -36,50 +35,6 @@ func recognizers() []csrRecognizer {
 		},
 	}
 	return recognizers
-}
-
-func isNodeServingCert(csr *capi.CertificateSigningRequest, x509cr *x509.CertificateRequest) bool {
-	if !reflect.DeepEqual([]string{"system:nodes"}, x509cr.Subject.Organization) {
-		log.Printf("Org does not match: %s\n", x509cr.Subject.Organization)
-		return false
-	}
-	if (len(x509cr.DNSNames) < 1) || (len(x509cr.IPAddresses) < 1) {
-		return false
-	}
-	if !hasExactUsages(csr, kubeletClientUsages) {
-		log.Println("Usage does not match")
-		return false
-	}
-	if !strings.HasPrefix(x509cr.Subject.CommonName, "system:node:") {
-		log.Printf("CN does not match: %s\n", x509cr.Subject.CommonName)
-		return false
-	}
-	return true
-}
-
-func hasExactUsages(csr *capi.CertificateSigningRequest, usages []capi.KeyUsage) bool {
-	if len(usages) != len(csr.Spec.Usages) {
-		return false
-	}
-
-	usageMap := map[capi.KeyUsage]struct{}{}
-	for _, u := range usages {
-		usageMap[u] = struct{}{}
-	}
-
-	for _, u := range csr.Spec.Usages {
-		if _, ok := usageMap[u]; !ok {
-			return false
-		}
-	}
-
-	return true
-}
-
-var kubeletClientUsages = []capi.KeyUsage{
-	capi.UsageKeyEncipherment,
-	capi.UsageDigitalSignature,
-	capi.UsageServerAuth,
 }
 
 // Add creates a new CertificateSigningRequest Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -118,15 +73,12 @@ type ReconcileCertificateSigningRequest struct {
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
-	// TODO: Need to refactor to use only single client
+	// Helper client wrapper
 	clientset clientset.Interface
 }
 
 // Reconcile reads that state of the cluster for a CertificateSigningRequest object and makes changes based on the state read
 // and what is in the CertificateSigningRequest.Spec
-// TODO(user): Modify this Reconcile function to implement your Controller logic.  This example creates
-// a Pod as an example
-// Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileCertificateSigningRequest) Reconcile(request reconcile.Request) (reconcile.Result, error) {
@@ -177,9 +129,11 @@ func (r *ReconcileCertificateSigningRequest) Reconcile(request reconcile.Request
 		}
 
 		if approved {
+			log.Printf("approving csr %s with SANS: %s, IP Address:%s\n", csr.ObjectMeta.Name, x509cr.DNSNames, x509cr.IPAddresses)
 			appendApprovalCondition(csr, recognizer.successMessage)
 			_, err = r.clientset.CertificatesV1beta1().CertificateSigningRequests().UpdateApproval(csr)
 			if err != nil {
+				log.Printf("error updating approval for csr: %v\n", err)
 				return reconcile.Result{}, fmt.Errorf("error updating approval for csr: %v", err)
 			}
 		} else {
@@ -192,14 +146,15 @@ func (r *ReconcileCertificateSigningRequest) Reconcile(request reconcile.Request
 	}
 
 	if len(tried) != 0 {
-		return reconcile.Result{}, fmt.Errorf("recognized csr %q as %v but subject access review was not approved", csr.Name, tried)
+		log.Printf("csr %s not recognized as kubelet serving csr, tried: %v", csr.Name, tried)
+		return reconcile.Result{}, nil
 	}
 
 	return reconcile.Result{}, nil
 }
 
+// Validate that the given node has authorization to actualy create CSRs
 func (r *ReconcileCertificateSigningRequest) authorize(csr *capi.CertificateSigningRequest, rattrs authorization.ResourceAttributes) (bool, error) {
-	log.Printf("Authorizing CSR %s\n", csr.ObjectMeta.Name)
 	extra := make(map[string]authorization.ExtraValue)
 	for k, v := range csr.Spec.Extra {
 		extra[k] = authorization.ExtraValue(v)
@@ -218,7 +173,6 @@ func (r *ReconcileCertificateSigningRequest) authorize(csr *capi.CertificateSign
 	if err != nil {
 		return false, err
 	}
-	log.Printf("SAR status: %v", sar)
 	return sar.Status.Allowed, nil
 }
 
