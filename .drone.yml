@@ -19,6 +19,8 @@ pipeline:
     repo: quay.io/kontena/kubelet-rubber-stamp-amd64
     dockerfile: Dockerfile
     auto_tag: true
+    when:
+      branches: ['master', 'refs/tags/*']
 
   docker-arm:
     group: image
@@ -30,3 +32,5 @@ pipeline:
     build_args:
       - ARCH=arm64
     auto_tag: true
+    when:
+      branches: ['master', 'refs/tags/*']
