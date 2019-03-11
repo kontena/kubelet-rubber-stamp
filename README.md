@@ -33,7 +33,7 @@ root@cluster-worker-4:~# openssl s_client -showcerts -connect localhost:10250 </
 ...
 ```
 
-Check that the certificate kubelet offers in itäs API is signed by control plane.
+Check that the certificate kubelet offers in it's API is signed by control plane.
 
 ## Deploying
 
