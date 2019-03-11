@@ -27,7 +27,7 @@ root@cluster-worker-4:~# ls -lah /var/lib/kubelet/pki/kubelet-server-*
 lrwxrwxrwx 1 root root   59 Mar  6 09:46 /var/lib/kubelet/pki/kubelet-server-current.pem -> /var/lib/kubelet/pki/kubelet-server-2019-03-06-09-46-48.pem
 ```
 
-Another way of validating is to peak at the kubelet API which certificate it offers:
+Another way of validating is to peek into the kubelet API to see which certificate it offers:
 ```sh
 root@cluster-worker-4:~# openssl s_client -showcerts -connect localhost:10250 </dev/null
 ...
