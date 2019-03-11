@@ -20,12 +20,22 @@ To enable kubelet serving certificate bootstrapping you need to set `serverTLSBo
 
 ## Validation
 
-Once kubelet, api-server and kubelet-rubber-stamp have all played nice and kubelet has gotten hold of the automatically bootsrapped, you can verfiy it using several ways. Kubelet stores certificates it uses on disk, under `/var/lib/kubelet/pki`:
+
+Once kubelet, api-server and kubelet-rubber-stamp have all played nice, kubelet should have gotten hold of the automatically bootsrapped serving certificate.
+
+Kubelet stores the certificates it uses on disk, under `/var/lib/kubelet/pki`:
 ```sh
 root@cluster-worker-4:~# ls -lah /var/lib/kubelet/pki/kubelet-server-*
 -rw------- 1 root root 1.2K Mar  6 09:46 /var/lib/kubelet/pki/kubelet-server-2019-03-06-09-46-48.pem
 lrwxrwxrwx 1 root root   59 Mar  6 09:46 /var/lib/kubelet/pki/kubelet-server-current.pem -> /var/lib/kubelet/pki/kubelet-server-2019-03-06-09-46-48.pem
 ```
+
+You can see the certificate details e.g. with:
+```
+root@cluster-worker-4:~# openssl x509 -in /var/lib/kubelet/pki/kubelet-server-current.pem -text -noout
+```
+
+Check that the output details match the expected ones, especially that the certificate is signed by your Kubernetes CA.
 
 Another way of validating is to peek into the kubelet API to see which certificate it offers:
 ```sh
