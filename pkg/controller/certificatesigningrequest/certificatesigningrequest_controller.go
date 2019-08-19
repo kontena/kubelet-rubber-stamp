@@ -179,7 +179,7 @@ func (r *ReconcileCertificateSigningRequest) authorize(csr *capi.CertificateSign
 func appendApprovalCondition(csr *capi.CertificateSigningRequest, message string) {
 	csr.Status.Conditions = append(csr.Status.Conditions, capi.CertificateSigningRequestCondition{
 		Type:    capi.CertificateApproved,
-		Reason:  "AutoApproved",
+		Reason:  "AutoApproved by kubelet-rubber-stamp",
 		Message: message,
 	})
 }
