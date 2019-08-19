@@ -129,7 +129,7 @@ func (r *ReconcileCertificateSigningRequest) Reconcile(request reconcile.Request
 		}
 
 		if approved {
-			log.Printf("approving csr %s with SANS: %s, IP Address:%s\n", csr.ObjectMeta.Name, x509cr.DNSNames, x509cr.IPAddresses)
+			log.Printf("approving csr %s with SANs: %s, IP Addresses:%s\n", csr.ObjectMeta.Name, x509cr.DNSNames, x509cr.IPAddresses)
 			appendApprovalCondition(csr, recognizer.successMessage)
 			_, err = r.clientset.CertificatesV1beta1().CertificateSigningRequests().UpdateApproval(csr)
 			if err != nil {
@@ -137,8 +137,8 @@ func (r *ReconcileCertificateSigningRequest) Reconcile(request reconcile.Request
 				return reconcile.Result{}, fmt.Errorf("error updating approval for csr: %v", err)
 			}
 		} else {
-			log.Printf("SubjectAccessReview not succesfull for CSR %s\n", request.NamespacedName)
-			return reconcile.Result{}, fmt.Errorf("SubjectAccessReview not succesfull")
+			log.Printf("SubjectAccessReview not successful for CSR %s\n", request.NamespacedName)
+			return reconcile.Result{}, fmt.Errorf("SubjectAccessReview failed")
 		}
 
 		return reconcile.Result{}, nil
