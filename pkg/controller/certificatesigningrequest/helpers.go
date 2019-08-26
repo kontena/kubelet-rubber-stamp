@@ -6,7 +6,6 @@ import (
 	"errors"
 	"log"
 	"reflect"
-	"strings"
 
 	capi "k8s.io/api/certificates/v1beta1"
 )
@@ -80,8 +79,8 @@ func isNodeServingCert(csr *capi.CertificateSigningRequest, x509cr *x509.Certifi
 		log.Println("Usage does not match")
 		return false
 	}
-	if !strings.HasPrefix(x509cr.Subject.CommonName, "system:node:") {
-		log.Printf("CN does not match: %s\n", x509cr.Subject.CommonName)
+	if csr.Spec.Username != x509cr.Subject.CommonName {
+		log.Println("x509 CN %q doesn't match CSR username %q", x509cr.Subject.CommonName, csr.Spec.Username)
 		return false
 	}
 	return true
