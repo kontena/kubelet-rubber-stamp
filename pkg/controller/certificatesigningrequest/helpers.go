@@ -79,8 +79,12 @@ func isNodeServingCert(csr *capi.CertificateSigningRequest, x509cr *x509.Certifi
 		log.Println("Usage does not match")
 		return false
 	}
+	if !strings.HasPrefix(x509cr.Subject.CommonName, "system:node:") {
+		log.Printf("CN does not start with 'system:node': %s\n", x509cr.Subject.CommonName)
+		return false
+	}
 	if csr.Spec.Username != x509cr.Subject.CommonName {
-		log.Println("x509 CN %q doesn't match CSR username %q", x509cr.Subject.CommonName, csr.Spec.Username)
+		log.Printf("x509 CN %q doesn't match CSR username %q", x509cr.Subject.CommonName, csr.Spec.Username)
 		return false
 	}
 	return true
