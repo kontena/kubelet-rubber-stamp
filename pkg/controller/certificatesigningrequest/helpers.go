@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"reflect"
+	"strings"
 
 	capi "k8s.io/api/certificates/v1beta1"
 )
