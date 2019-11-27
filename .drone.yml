@@ -1,3 +1,11 @@
+---
+kind: pipeline
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
 workspace:
   base: /go
   path: src/github.com/kontena/kubelet-rubber-stamp
