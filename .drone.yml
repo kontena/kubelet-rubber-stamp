@@ -1,9 +1,17 @@
+---
+kind: pipeline
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
 workspace:
   base: /go
   path: src/github.com/kontena/kubelet-rubber-stamp
 
-pipeline:
-  test:
+steps:
+  - name: test
     image: golang:1.11
     commands:
       - mkdir -p /go/bin
@@ -11,26 +19,30 @@ pipeline:
       - dep ensure -v -vendor-only
       - ./test.sh
 
-  docker:
-    group: image
-    registry: quay.io
+  - name: docker
     image: plugins/docker
-    secrets: [ docker_username, docker_password ]
-    repo: quay.io/kontena/kubelet-rubber-stamp-amd64
-    dockerfile: Dockerfile
-    auto_tag: true
-    when:
-      branches: ['master', 'refs/tags/*']
+    settings:
+      registry: quay.io
+      secrets: [ docker_username, docker_password ]
+      repo: quay.io/kontena/kubelet-rubber-stamp-amd64
+      dockerfile: Dockerfile
+      auto_tag: true
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
 
-  docker-arm:
-    group: image
-    registry: quay.io
+  - name: docker-arm
     image: plugins/docker
-    secrets: [ docker_username, docker_password ]
-    repo: quay.io/kontena/kubelet-rubber-stamp-arm64
-    dockerfile: Dockerfile
-    build_args:
-      - ARCH=arm64
-    auto_tag: true
-    when:
-      branches: ['master', 'refs/tags/*']
+    settings:
+      registry: quay.io
+      secrets: [ docker_username, docker_password ]
+      repo: quay.io/kontena/kubelet-rubber-stamp-arm64
+      dockerfile: Dockerfile
+      build_args:
+        - ARCH=arm64
+      auto_tag: true
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
