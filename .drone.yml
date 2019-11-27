@@ -10,8 +10,8 @@ workspace:
   base: /go
   path: src/github.com/kontena/kubelet-rubber-stamp
 
-pipeline:
-  test:
+steps:
+  - name: test
     image: golang:1.11
     commands:
       - mkdir -p /go/bin
@@ -19,7 +19,7 @@ pipeline:
       - dep ensure -v -vendor-only
       - ./test.sh
 
-  docker:
+  - name: docker
     group: image
     registry: quay.io
     image: plugins/docker
@@ -30,7 +30,7 @@ pipeline:
     when:
       branches: ['master', 'refs/tags/*']
 
-  docker-arm:
+  - name: docker-arm
     group: image
     registry: quay.io
     image: plugins/docker
