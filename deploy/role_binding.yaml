@@ -4,7 +4,7 @@ metadata:
   name: kubelet-rubber-stamp
 subjects:
 - kind: ServiceAccount
-  namespace: default
+  namespace: kube-system
   name: kubelet-rubber-stamp
 roleRef:
   kind: ClusterRole
