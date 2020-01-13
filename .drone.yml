@@ -7,16 +7,15 @@ platform:
   arch: amd64
 
 workspace:
-  base: /go
-  path: src/github.com/kontena/kubelet-rubber-stamp
+  base: /src
+  path: kubelet-rubber-stamp
 
 steps:
   - name: test
     image: golang:1.11
     commands:
       - mkdir -p /go/bin
-      - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-      - dep ensure -v -vendor-only
+      - go mod download
       - ./test.sh
 
   - name: docker
