@@ -1,7 +1,5 @@
 FROM golang:1.11 as builder
 
-RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-
 WORKDIR  /src
 
 # Add dependency and download it
