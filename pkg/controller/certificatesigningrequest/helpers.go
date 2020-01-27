@@ -4,7 +4,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"log"
+	"k8s.io/klog"
 	"reflect"
 	"strings"
 
@@ -70,22 +70,22 @@ var kubeletServerUsages = []capi.KeyUsage{
 
 func isNodeServingCert(csr *capi.CertificateSigningRequest, x509cr *x509.CertificateRequest) bool {
 	if !reflect.DeepEqual([]string{"system:nodes"}, x509cr.Subject.Organization) {
-		log.Printf("Org does not match: %s\n", x509cr.Subject.Organization)
+		klog.Warningf("Org does not match: %s", x509cr.Subject.Organization)
 		return false
 	}
 	if (len(x509cr.DNSNames) < 1) || (len(x509cr.IPAddresses) < 1) {
 		return false
 	}
 	if !hasExactUsages(csr, kubeletServerUsages) {
-		log.Println("Usage does not match")
+		klog.V(2).Info("Usage does not match")
 		return false
 	}
 	if !strings.HasPrefix(x509cr.Subject.CommonName, "system:node:") {
-		log.Printf("CN does not start with 'system:node': %s\n", x509cr.Subject.CommonName)
+		klog.Warningf("CN does not start with 'system:node': %s", x509cr.Subject.CommonName)
 		return false
 	}
 	if csr.Spec.Username != x509cr.Subject.CommonName {
-		log.Printf("x509 CN %q doesn't match CSR username %q", x509cr.Subject.CommonName, csr.Spec.Username)
+		klog.Warningf("x509 CN %q doesn't match CSR username %q", x509cr.Subject.CommonName, csr.Spec.Username)
 		return false
 	}
 	return true
