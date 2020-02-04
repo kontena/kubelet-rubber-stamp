@@ -4,13 +4,12 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
-	"log"
-
 	authorization "k8s.io/api/authorization/v1beta1"
 	capi "k8s.io/api/certificates/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -82,7 +81,7 @@ type ReconcileCertificateSigningRequest struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileCertificateSigningRequest) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	log.Printf("Reconciling CertificateSigningRequest %s/%s\n", request.Namespace, request.Name)
+	klog.V(2).Infof("Reconciling CertificateSigningRequest %s/%s", request.Namespace, request.Name)
 
 	// Fetch the CertificateSigningRequest instance
 	csr := &capi.CertificateSigningRequest{}
@@ -99,12 +98,12 @@ func (r *ReconcileCertificateSigningRequest) Reconcile(request reconcile.Request
 	}
 
 	if len(csr.Status.Certificate) != 0 {
-		log.Println("CSR already has a certificate, ignoring")
+		klog.V(2).Info("CSR already has a certificate, ignoring")
 		return reconcile.Result{}, nil
 	}
 
 	if approved, denied := getCertApprovalCondition(&csr.Status); approved || denied {
-		log.Printf("CSR already has a approval status: %v\n", csr.Status)
+		klog.V(2).Infof("CSR already has a approval status: %v", csr.Status)
 		return reconcile.Result{}, nil
 	}
 
@@ -124,20 +123,20 @@ func (r *ReconcileCertificateSigningRequest) Reconcile(request reconcile.Request
 
 		approved, err := r.authorize(csr, recognizer.permission)
 		if err != nil {
-			log.Printf("SubjectAccessReview failed:%s\n", err)
+			klog.Warningf("SubjectAccessReview failed: %s", err)
 			return reconcile.Result{}, err
 		}
 
 		if approved {
-			log.Printf("approving csr %s with SANs: %s, IP Addresses:%s\n", csr.ObjectMeta.Name, x509cr.DNSNames, x509cr.IPAddresses)
+			klog.V(2).Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.ObjectMeta.Name, x509cr.DNSNames, x509cr.IPAddresses)
 			appendApprovalCondition(csr, recognizer.successMessage)
 			_, err = r.clientset.CertificatesV1beta1().CertificateSigningRequests().UpdateApproval(csr)
 			if err != nil {
-				log.Printf("error updating approval for csr: %v\n", err)
+				klog.Warningf("error updating approval for csr: %v", err)
 				return reconcile.Result{}, fmt.Errorf("error updating approval for csr: %v", err)
 			}
 		} else {
-			log.Printf("SubjectAccessReview not successful for CSR %s\n", request.NamespacedName)
+			klog.Warningf("SubjectAccessReview not successful for CSR %s", request.NamespacedName)
 			return reconcile.Result{}, fmt.Errorf("SubjectAccessReview failed")
 		}
 
@@ -146,7 +145,7 @@ func (r *ReconcileCertificateSigningRequest) Reconcile(request reconcile.Request
 	}
 
 	if len(tried) != 0 {
-		log.Printf("csr %s not recognized as kubelet serving csr, tried: %v", csr.Name, tried)
+		klog.Warningf("csr %s not recognized as kubelet serving csr, tried: %v", csr.Name, tried)
 		return reconcile.Result{}, nil
 	}
 

@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"log"
 	"runtime"
 
 	"github.com/kontena/kubelet-rubber-stamp/pkg/apis"
@@ -10,52 +9,57 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
 func printVersion() {
-	log.Printf("Go Version: %s", runtime.Version())
-	log.Printf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	log.Printf("operator-sdk Version: %v", sdkVersion.Version)
+	klog.V(2).Infof("Go Version: %s", runtime.Version())
+	klog.V(2).Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
+	klog.V(2).Infof("operator-sdk Version: %v", sdkVersion.Version)
 }
 
 func main() {
-	printVersion()
+	klog.InitFlags(nil)
+	flag.Set("logtostderr", "true")
+	flag.Set("v", "2")
 	flag.Parse()
+
+	printVersion()
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
-		log.Fatalf("failed to get watch namespace: %v", err)
+		klog.Fatalf("failed to get watch namespace: %v", err)
 	}
 
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Fatal(err)
+		klog.Fatal(err)
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
 	if err != nil {
-		log.Fatal(err)
+		klog.Fatal(err)
 	}
 
-	log.Print("Registering Components.")
+	klog.V(2).Info("Registering Components.")
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
-		log.Fatal(err)
+		klog.Fatal(err)
 	}
 
 	// Setup all Controllers
 	if err := controller.AddToManager(mgr); err != nil {
-		log.Fatal(err)
+		klog.Fatal(err)
 	}
 
-	log.Print("Starting the Cmd.")
+	klog.V(2).Info("Starting the Cmd.")
 
 	// Start the Cmd
-	log.Fatal(mgr.Start(signals.SetupSignalHandler()))
+	klog.Fatal(mgr.Start(signals.SetupSignalHandler()))
 }

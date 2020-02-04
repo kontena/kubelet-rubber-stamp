@@ -23,6 +23,8 @@ spec:
       containers:
         - name: kubelet-rubber-stamp
           image: quay.io/kontena/kubelet-rubber-stamp-amd64:latest
+          args:
+            - "--v=2"
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
