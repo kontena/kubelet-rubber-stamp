@@ -73,7 +73,8 @@ func isNodeServingCert(csr *capi.CertificateSigningRequest, x509cr *x509.Certifi
 		klog.Warningf("Org does not match: %s", x509cr.Subject.Organization)
 		return false
 	}
-	if (len(x509cr.DNSNames) < 1) || (len(x509cr.IPAddresses) < 1) {
+	if (len(x509cr.DNSNames) < 1) && (len(x509cr.IPAddresses) < 1) {
+		klog.Warningf("No DNS or IP addresses given in CSR")
 		return false
 	}
 	if !hasExactUsages(csr, kubeletServerUsages) {
