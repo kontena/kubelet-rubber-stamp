@@ -7,12 +7,12 @@ tags:
 {{/if}}
 manifests:
   -
-    image: quay.io/kontena/kubelet-rubber-stamp-amd64:{{#if build.tag}}{{trimPrefix "v" build.tag}}{{else}}latest{{/if}}
+    image: docker.io/kontenapharos/kubelet-rubber-stamp-amd64:{{#if build.tag}}{{trimPrefix "v" build.tag}}{{else}}latest{{/if}}
     platform:
       architecture: amd64
       os: linux
   -
-    image: quay.io/kontena/kubelet-rubber-stamp-arm64:{{#if build.tag}}{{trimPrefix "v" build.tag}}{{else}}latest{{/if}}
+    image: docker.io/kontenapharos/kubelet-rubber-stamp-arm64:{{#if build.tag}}{{trimPrefix "v" build.tag}}{{else}}latest{{/if}}
     platform:
       architecture: arm64
       os: linux
