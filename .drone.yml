@@ -12,7 +12,7 @@ workspace:
 
 steps:
   - name: test
-    image: golang:1.11
+    image: golang:1.14
     commands:
       - mkdir -p /go/bin
       - go mod download
