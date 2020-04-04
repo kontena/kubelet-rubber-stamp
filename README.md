@@ -1,5 +1,7 @@
 # kubelet-rubber-stamp
 
+[![Build Status](https://cloud.drone.io/api/badges/kontena/kubelet-rubber-stamp/status.svg)](https://cloud.drone.io/kontena/kubelet-rubber-stamp)
+
 kubelet-rubber-stamp is simple CSR auto approver operator to help bootstrapping kubelet serving certificates easily.
 
 The logic used follows the same logic used when auto-approving kubelet client certificates in kubelet [TLS bootstrap](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/#approval) phase.
