@@ -22,7 +22,6 @@ steps:
     image: plugins/docker
     settings:
       registry: quay.io
-      secrets: [ docker_username, docker_password ]
       repo: quay.io/kontena/kubelet-rubber-stamp-amd64
       dockerfile: Dockerfile
       auto_tag: true
@@ -35,7 +34,6 @@ steps:
     image: plugins/docker
     settings:
       registry: quay.io
-      secrets: [ docker_username, docker_password ]
       repo: quay.io/kontena/kubelet-rubber-stamp-arm64
       dockerfile: Dockerfile
       build_args:
@@ -45,6 +43,30 @@ steps:
         from_secret: docker_username
       password:
         from_secret: docker_password
+
+  - name: docker-hub
+    image: plugins/docker
+    settings:
+      repo: kontenapharos/kubelet-rubber-stamp-amd64
+      dockerfile: Dockerfile
+      auto_tag: true
+      username:
+        from_secret: docker_hub_username
+      password:
+        from_secret: docker_hub_password
+
+  - name: docker-hub-arm
+    image: plugins/docker
+    settings:
+      repo: kontenapharos/kubelet-rubber-stamp-arm64
+      dockerfile: Dockerfile
+      build_args:
+        - ARCH=arm64
+      auto_tag: true
+      username:
+        from_secret: docker_hub_username
+      password:
+        from_secret: docker_hub_password
 
   - name: manifest
     image: plugins/manifest
