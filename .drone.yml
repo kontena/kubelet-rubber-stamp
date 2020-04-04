@@ -45,3 +45,13 @@ steps:
         from_secret: docker_username
       password:
         from_secret: docker_password
+
+  - name: manifest
+    image: plugins/manifest
+    settings:
+      username:
+        from_secret: docker_hub_username
+      password:
+        from_secret: docker_hub_password
+      spec: .manifest.tpl
+      auto_tag: true
