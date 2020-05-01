@@ -13,6 +13,8 @@ spec:
       labels:
         name: kubelet-rubber-stamp
     spec:
+      securityContext:
+        runAsUser: 1001
       serviceAccountName: kubelet-rubber-stamp
       tolerations:
         - effect: NoSchedule
