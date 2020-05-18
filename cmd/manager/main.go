@@ -22,9 +22,17 @@ func printVersion() {
 }
 
 func main() {
+	var enableLeaderElection bool
+	var leaderElectionID string
+
 	klog.InitFlags(nil)
 	flag.Set("logtostderr", "true")
 	flag.Set("v", "2")
+	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
+		"Enable leader election for controller manager. "+
+			"Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(&leaderElectionID, "leader-election-id", "kubelet-rubber-stamp-leader-election",
+		"The name of the configmap used to coordinate leader election between controller-managers.")
 	flag.Parse()
 
 	printVersion()
@@ -41,7 +49,13 @@ func main() {
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
+	mgr, err := manager.New(
+		cfg,
+		manager.Options{
+			Namespace:               namespace,
+			LeaderElection:          enableLeaderElection
+			LeaderElectionID:        leaderElectionID,
+		})
 	if err != nil {
 		klog.Fatal(err)
 	}
