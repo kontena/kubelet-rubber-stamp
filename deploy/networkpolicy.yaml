@@ -1,0 +1,13 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kubelet-rubber-stamp
+  namespace: kube-system
+spec:
+  podSelector:
+    matchLabels:
+      name: kubelet-rubber-stamp
+  policyTypes:
+  - Ingress
+  # Deny all ingress traffic
+  ingress: []

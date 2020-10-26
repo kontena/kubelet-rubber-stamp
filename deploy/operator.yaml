@@ -26,6 +26,21 @@ spec:
           args:
             - "--v=2"
           imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            runAsUser: 1001
+            runAsNonRoot: true
+            privileged: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["all"]
           env:
             - name: WATCH_NAMESPACE
               value: ""
