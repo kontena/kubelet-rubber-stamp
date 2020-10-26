@@ -26,6 +26,13 @@ spec:
           args:
             - "--v=2"
           imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
           env:
             - name: WATCH_NAMESPACE
               value: ""
