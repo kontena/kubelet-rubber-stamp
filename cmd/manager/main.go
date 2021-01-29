@@ -2,17 +2,20 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"runtime"
 
-	"github.com/kontena/kubelet-rubber-stamp/pkg/apis"
-	"github.com/kontena/kubelet-rubber-stamp/pkg/controller"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+
+	"github.com/kontena/kubelet-rubber-stamp/pkg/apis"
+	"github.com/kontena/kubelet-rubber-stamp/pkg/controller"
 )
 
 func printVersion() {
@@ -22,7 +25,10 @@ func printVersion() {
 }
 
 func main() {
+	var metricsAddr string
+
 	klog.InitFlags(nil)
+	flag.StringVar(&metricsAddr, "metrics-addr", "", fmt.Sprintf("The address the metric endpoint binds to, or \"0\" to disable (default: %s)", metrics.DefaultBindAddress))
 	flag.Set("logtostderr", "true")
 	flag.Set("v", "2")
 	flag.Parse()
@@ -40,8 +46,20 @@ func main() {
 		klog.Fatal(err)
 	}
 
+	switch metricsAddr {
+	case "":
+		klog.V(2).Infof("Exposing metrics on %s", metrics.DefaultBindAddress)
+	case "0":
+		klog.V(2).Info("Disabling metrics endpoint")
+	default:
+		klog.V(2).Infof("Exposing metrics on %s", metricsAddr)
+	}
+
 	// Create a new Cmd to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
+	mgr, err := manager.New(cfg, manager.Options{
+		Namespace: namespace,
+		MetricsBindAddress: metricsAddr,
+	})
 	if err != nil {
 		klog.Fatal(err)
 	}
