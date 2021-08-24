@@ -122,7 +122,7 @@ func (r *ReconcileCertificateSigningRequest) Reconcile(ctx context.Context, requ
 			continue
 		}
 
-		approved, err := r.authorize(csr, recognizer.permission)
+		approved, err := r.authorize(ctx, csr, recognizer.permission)
 		if err != nil {
 			klog.Warningf("SubjectAccessReview failed: %s", err)
 			return reconcile.Result{}, err
@@ -155,7 +155,7 @@ func (r *ReconcileCertificateSigningRequest) Reconcile(ctx context.Context, requ
 }
 
 // Validate that the given node has authorization to actualy create CSRs
-func (r *ReconcileCertificateSigningRequest) authorize(csr *capi.CertificateSigningRequest, rattrs authorization.ResourceAttributes) (bool, error) {
+func (r *ReconcileCertificateSigningRequest) authorize(ctx context.Context, csr *capi.CertificateSigningRequest, rattrs authorization.ResourceAttributes) (bool, error) {
 	extra := make(map[string]authorization.ExtraValue)
 	for k, v := range csr.Spec.Extra {
 		extra[k] = authorization.ExtraValue(v)
@@ -171,7 +171,6 @@ func (r *ReconcileCertificateSigningRequest) authorize(csr *capi.CertificateSign
 		},
 	}
 
-	ctx := context.TODO()
 	co := metav1.CreateOptions{}
 	sar, err := r.clientset.AuthorizationV1().SubjectAccessReviews().Create(ctx, sar, co)
 	if err != nil {
