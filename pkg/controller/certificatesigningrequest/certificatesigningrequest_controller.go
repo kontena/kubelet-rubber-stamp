@@ -6,6 +6,7 @@ import (
 	"fmt"
 	authorization "k8s.io/api/authorization/v1"
 	capi "k8s.io/api/certificates/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -182,6 +183,7 @@ func (r *ReconcileCertificateSigningRequest) authorize(ctx context.Context, csr 
 func appendApprovalCondition(csr *capi.CertificateSigningRequest, message string) {
 	csr.Status.Conditions = append(csr.Status.Conditions, capi.CertificateSigningRequestCondition{
 		Type:    capi.CertificateApproved,
+		Status:  v1.ConditionTrue,
 		Reason:  "AutoApproved by kubelet-rubber-stamp",
 		Message: message,
 	})
