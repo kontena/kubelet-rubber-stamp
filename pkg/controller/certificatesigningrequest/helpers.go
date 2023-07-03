@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"strings"
 
-	capi "k8s.io/api/certificates/v1beta1"
+	capi "k8s.io/api/certificates/v1"
 )
 
 func getCertApprovalCondition(status *capi.CertificateSigningRequestStatus) (approved bool, denied bool) {
@@ -63,7 +63,6 @@ func hasExactUsages(csr *capi.CertificateSigningRequest, usages []capi.KeyUsage)
 }
 
 var kubeletServerUsages = []capi.KeyUsage{
-	capi.UsageKeyEncipherment,
 	capi.UsageDigitalSignature,
 	capi.UsageServerAuth,
 }

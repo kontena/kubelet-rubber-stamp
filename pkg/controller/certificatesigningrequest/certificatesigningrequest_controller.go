@@ -5,7 +5,8 @@ import (
 	"crypto/x509"
 	"fmt"
 	authorization "k8s.io/api/authorization/v1"
-	capi "k8s.io/api/certificates/v1beta1"
+	capi "k8s.io/api/certificates/v1"
+	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -50,10 +51,8 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
-	ctrl.NewControllerManagedBy(mgr).For(&capi.CertificateSigningRequest{}).Watches(
+	return ctrl.NewControllerManagedBy(mgr).For(&capi.CertificateSigningRequest{}).Watches(
 		&capi.CertificateSigningRequest{}, &handler.EnqueueRequestForObject{}).Complete(r)
-
-	return nil
 }
 
 var _ reconcile.Reconciler = &ReconcileCertificateSigningRequest{}
@@ -122,7 +121,7 @@ func (r *ReconcileCertificateSigningRequest) Reconcile(ctx context.Context, requ
 		if approved {
 			klog.V(2).Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.ObjectMeta.Name, x509cr.DNSNames, x509cr.IPAddresses)
 			appendApprovalCondition(csr, recognizer.successMessage)
-			_, err = r.clientset.CertificatesV1beta1().CertificateSigningRequests().UpdateApproval(ctx, csr, v1.UpdateOptions{})
+			_, err = r.clientset.CertificatesV1().CertificateSigningRequests().UpdateApproval(ctx, csr.Name, csr, v1.UpdateOptions{})
 			if err != nil {
 				klog.Warningf("error updating approval for csr: %v", err)
 				return reconcile.Result{}, fmt.Errorf("error updating approval for csr: %v", err)
@@ -172,5 +171,6 @@ func appendApprovalCondition(csr *capi.CertificateSigningRequest, message string
 		Type:    capi.CertificateApproved,
 		Reason:  "AutoApproved by kubelet-rubber-stamp",
 		Message: message,
+		Status:  core.ConditionTrue,
 	})
 }

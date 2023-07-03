@@ -6,7 +6,7 @@ import (
 	"net"
 	"testing"
 
-	capi "k8s.io/api/certificates/v1beta1"
+	capi "k8s.io/api/certificates/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -103,7 +103,7 @@ func TestNodeServingCert_OnlyDNS(t *testing.T) {
 	}
 }
 
-func TestNodeServingCert_unmatchingUSages(t *testing.T) {
+func TestNodeServingCert_unmatchingUsages(t *testing.T) {
 	var csr = capi.CertificateSigningRequest{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-csr"},
 		Spec: capi.CertificateSigningRequestSpec{
