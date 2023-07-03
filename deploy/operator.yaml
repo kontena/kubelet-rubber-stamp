@@ -18,7 +18,7 @@ spec:
         - effect: NoSchedule
           operator: Exists
       nodeSelector:
-        node-role.kubernetes.io/master: ""
+        node-role.kubernetes.io/control-plane: ""
       priorityClassName: system-cluster-critical
       containers:
         - name: kubelet-rubber-stamp
