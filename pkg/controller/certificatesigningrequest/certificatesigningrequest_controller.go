@@ -4,18 +4,18 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
-	authorization "k8s.io/api/authorization/v1beta1"
+	authorization "k8s.io/api/authorization/v1"
 	capi "k8s.io/api/certificates/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // Tries to recognize CSRs that are specific to this use case
@@ -50,16 +50,8 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
-	c, err := controller.New("certificatesigningrequest-controller", mgr, controller.Options{Reconciler: r})
-	if err != nil {
-		return err
-	}
-
-	// Watch for changes to primary resource CertificateSigningRequest
-	err = c.Watch(&source.Kind{Type: &capi.CertificateSigningRequest{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
+	ctrl.NewControllerManagedBy(mgr).For(&capi.CertificateSigningRequest{}).Watches(
+		&capi.CertificateSigningRequest{}, &handler.EnqueueRequestForObject{}).Complete(r)
 
 	return nil
 }
@@ -80,12 +72,12 @@ type ReconcileCertificateSigningRequest struct {
 // and what is in the CertificateSigningRequest.Spec
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
-func (r *ReconcileCertificateSigningRequest) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileCertificateSigningRequest) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	klog.V(2).Infof("Reconciling CertificateSigningRequest %s/%s", request.Namespace, request.Name)
 
 	// Fetch the CertificateSigningRequest instance
 	csr := &capi.CertificateSigningRequest{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, csr)
+	err := r.client.Get(ctx, request.NamespacedName, csr)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -112,7 +104,7 @@ func (r *ReconcileCertificateSigningRequest) Reconcile(request reconcile.Request
 		return reconcile.Result{}, fmt.Errorf("unable to parse csr %q: %v", csr.Name, err)
 	}
 
-	tried := []string{}
+	var tried []string
 
 	for _, recognizer := range recognizers() {
 		tried = append(tried, recognizer.permission.Resource)
@@ -121,7 +113,7 @@ func (r *ReconcileCertificateSigningRequest) Reconcile(request reconcile.Request
 			continue
 		}
 
-		approved, err := r.authorize(csr, recognizer.permission)
+		approved, err := r.authorize(ctx, csr, recognizer.permission)
 		if err != nil {
 			klog.Warningf("SubjectAccessReview failed: %s", err)
 			return reconcile.Result{}, err
@@ -130,7 +122,7 @@ func (r *ReconcileCertificateSigningRequest) Reconcile(request reconcile.Request
 		if approved {
 			klog.V(2).Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.ObjectMeta.Name, x509cr.DNSNames, x509cr.IPAddresses)
 			appendApprovalCondition(csr, recognizer.successMessage)
-			_, err = r.clientset.CertificatesV1beta1().CertificateSigningRequests().UpdateApproval(csr)
+			_, err = r.clientset.CertificatesV1beta1().CertificateSigningRequests().UpdateApproval(ctx, csr, v1.UpdateOptions{})
 			if err != nil {
 				klog.Warningf("error updating approval for csr: %v", err)
 				return reconcile.Result{}, fmt.Errorf("error updating approval for csr: %v", err)
@@ -153,7 +145,7 @@ func (r *ReconcileCertificateSigningRequest) Reconcile(request reconcile.Request
 }
 
 // Validate that the given node has authorization to actualy create CSRs
-func (r *ReconcileCertificateSigningRequest) authorize(csr *capi.CertificateSigningRequest, rattrs authorization.ResourceAttributes) (bool, error) {
+func (r *ReconcileCertificateSigningRequest) authorize(ctx context.Context, csr *capi.CertificateSigningRequest, rattrs authorization.ResourceAttributes) (bool, error) {
 	extra := make(map[string]authorization.ExtraValue)
 	for k, v := range csr.Spec.Extra {
 		extra[k] = authorization.ExtraValue(v)
@@ -168,7 +160,7 @@ func (r *ReconcileCertificateSigningRequest) authorize(csr *capi.CertificateSign
 			ResourceAttributes: &rattrs,
 		},
 	}
-	sar, err := r.clientset.AuthorizationV1beta1().SubjectAccessReviews().Create(sar)
+	sar, err := r.clientset.AuthorizationV1().SubjectAccessReviews().Create(ctx, sar, v1.CreateOptions{})
 	if err != nil {
 		return false, err
 	}
